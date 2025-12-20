@@ -34,6 +34,7 @@ lint:
 	$(PY) -m ruff check .
 
 fmt:
+	$(PY) -m ruff check . --fix
 	$(PY) -m ruff format .
 
 hygiene: lint test
