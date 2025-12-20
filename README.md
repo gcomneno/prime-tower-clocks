@@ -59,6 +59,42 @@ Se invece `M ≤ N`:
 
 ---
 
+---
+
+## Nice primes: criteri ufficiali (orologi validi)
+
+Nel progetto un “orologio” non è un primo qualunque: deve essere un **nice prime**.
+
+Dato:
+- base fissa **2**
+- insieme di primi piccoli `smooth_primes` (default: `2,3,5,7,11,13`)
+
+un primo `p` è **nice** se e solo se vale **tutto**:
+
+1) **p è primo** (nel codice: test di primalità “probable prime”, deterministico per < 2^64)
+2) **p − 1 è smooth** rispetto a `smooth_primes`  
+   cioè la fattorizzazione di `p−1` usa **solo** quei primi (nessun “resto”)
+3) **2 è generatore modulo p** (radice primitiva)  
+   cioè `ord_p(2) = p−1`, quindi **ogni residuo non nullo** è una potenza di 2:
+   ```
+   ∀ r ∈ {1..p−1}  ∃ e : 2^e ≡ r (mod p)
+   ```
+
+Definizione operativa (quella che comanda davvero):
+> `p` è “nice” ⇔ `nice_prime_info(p, smooth_primes)` restituisce una fattorizzazione (non `None`).
+
+### Perché servono (senza fuffa)
+- Se `2` **non** è generatore, alcuni residui `r != 0` **non sono** potenze di 2 ⇒ non esiste `e` ⇒ firma incompleta.
+- Se `p−1` **non è smooth**, il log discreto diventa troppo costoso (o impraticabile) ⇒ la firma smette di essere “economica”.
+- Se `p` **non è primo**, non sei in `F_p*` (gruppo pulito) ⇒ discreti log/CRT diventano concettualmente sbagliati.
+
+### Cosa succede quando `p` divide N (r = 0)
+`0` non appartiene al gruppo moltiplicativo `F_p*`, quindi l’esponente **non esiste**.
+In quel caso la firma salva solo il marker:
+- `z = true`  (cioè `p | N`)
+
+Questo non “rompe” la ricostruzione: il CRT ricostruisce sempre **N mod M**.
+
 ## Cosa viene salvato (firma minimale)
 Per ogni orologio (primo `p`) salviamo solo:
 - `p` → il primo
@@ -185,4 +221,4 @@ make demo
 ```
 
 ![CI](https://img.shields.io/github/actions/workflow/status/gcomneno/prime-tower-clocks/ci.yml?branch=main&label=CI)
-![License](https://img.shields.io/github/license/gcomneno/prime-tower-clocks)
+![License](https://img.shields.io/github/license/gcomneno/prime-tower-clocks)```

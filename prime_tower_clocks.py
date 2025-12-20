@@ -179,9 +179,17 @@ def is_primitive_root_2(p: int, factors_p_minus_1: dict[int, int]) -> bool:
 
 def nice_prime_info(p: int, smooth_primes: Sequence[int]) -> dict[int, int] | None:
     """
-    Se p è "nice", ritorna la fattorizzazione smooth di (p-1) come dict {q:exp},
-    altrimenti None.
-    """
+    "Nice prime" (orologio valido) — definizione ufficiale del progetto.
+
+    Un primo p è "nice" (rispetto a smooth_primes) se e solo se:
+      1) p è primo
+      2) (p-1) è completamente smooth rispetto a smooth_primes (nessun resto)
+      3) 2 è generatore modulo p (ord_p(2) = p-1)
+
+    Se p è "nice", ritorna la fattorizzazione smooth di (p-1) come dict {q:exp}.
+    Altrimenti ritorna None.
+
+    Nota: questo predicato è l'autorità unica (README + code)."""
     if not is_probable_prime(p):
         return None
     fac, rem = factor_smooth(p - 1, smooth_primes)
@@ -376,7 +384,11 @@ def choose_orologi_for_digits(
     """
     Sceglie una lista di orologi (p, factors(p-1)) tale che M = Π p > 10^D.
     L'anchor viene messo per primo.
-    """
+
+    "Orologio" = primo "nice" secondo nice_prime_info(p, smooth_primes).
+    Questa scelta garantisce:
+      - per ogni residuo non nullo r mod p esiste e con 2^e ≡ r (mod p)
+      - il dlog base 2 è efficiente perché (p-1) è smooth (Pohlig–Hellman)"""
     if D <= 0:
         raise ValueError("D deve essere positivo.")
     target = 10**D
