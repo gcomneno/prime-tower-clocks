@@ -10,26 +10,25 @@ File format (v1):
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable, Optional
 
 
 @dataclass(frozen=True)
 class ClockRec:
     p: int
     z: bool
-    e: Optional[int] = None  # present only if z is False
+    e: int | None = None  # present only if z is False
 
 
 @dataclass(frozen=True)
 class PTCSig:
     base: int
     clocks: list[ClockRec]
-    created_utc: Optional[str] = None
-    note: Optional[str] = None
+    created_utc: str | None = None
+    note: str | None = None
     # optional summary hints (not required for reconstruction)
-    M_bits: Optional[int] = None
-    N_bits: Optional[int] = None
-    lossless_claim: Optional[bool] = None
+    M_bits: int | None = None
+    N_bits: int | None = None
+    lossless_claim: bool | None = None
 
 
 def _utc_now_iso() -> str:
@@ -129,12 +128,12 @@ def _validate_summary(obj: dict) -> dict:
 
 
 def load_signature_jsonl(path: str) -> PTCSig:
-    header: Optional[PTCSig] = None
+    header: PTCSig | None = None
     clocks: list[ClockRec] = []
     seen_p: set[int] = set()
-    summary: Optional[dict] = None
+    summary: dict | None = None
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for lineno, line in enumerate(f, start=1):
             line = line.strip()
             if not line:
@@ -182,4 +181,5 @@ def load_signature_jsonl(path: str) -> PTCSig:
         lossless_claim=lossless_claim,
     )
 
-__all__ = ['ClockRec','PTCSig','dump_signature_jsonl','load_signature_jsonl','_utc_now_iso']
+
+__all__ = ["ClockRec", "PTCSig", "dump_signature_jsonl", "load_signature_jsonl", "_utc_now_iso"]

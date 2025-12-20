@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from jsonl_validation import load_signature_jsonl, dump_signature_jsonl
-from reconstruct import reconstruct_from_signature
+from jsonl_validation import dump_signature_jsonl, load_signature_jsonl
 from prime_tower_clocks import compute_tower_signature, tower_to_ptcsig
+from reconstruct import reconstruct_from_signature
 
 
 def test_jsonl_roundtrip_and_reconstruct_lossless(tmp_path: Path):
@@ -32,10 +32,13 @@ def test_jsonl_validation_rejects_bad_clock(tmp_path: Path):
     # z=true must not include e
     p = tmp_path / "bad.jsonl"
     p.write_text(
-        "\n".join([
-            json.dumps({"type":"ptc","version":1,"base":2}),
-            json.dumps({"p":61,"z":True,"e":7}),
-        ]) + "\n",
+        "\n".join(
+            [
+                json.dumps({"type": "ptc", "version": 1, "base": 2}),
+                json.dumps({"p": 61, "z": True, "e": 7}),
+            ]
+        )
+        + "\n",
         encoding="utf-8",
     )
     with pytest.raises(ValueError):

@@ -183,3 +183,6 @@ ruff format .
 pytest -q
 make demo
 ```
+
+![CI](https://img.shields.io/github/actions/workflow/status/gcomneno/prime-tower-clocks/ci.yml?branch=main&label=CI)
+![License](https://img.shields.io/github/license/gcomneno/prime-tower-clocks)

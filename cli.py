@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """CLI for Prime Tower Clocks.
 
 Usage examples:
@@ -15,8 +14,6 @@ from __future__ import annotations
 import argparse
 
 from jsonl_validation import dump_signature_jsonl, load_signature_jsonl
-from reconstruct import reconstruct_from_signature as reconstruct_from_jsonl
-
 from prime_tower_clocks import (
     DEFAULT_ANCHOR,
     DEFAULT_SMOOTH_PRIMES,
@@ -25,12 +22,18 @@ from prime_tower_clocks import (
     reconstruct_from_tower_signature,
     tower_to_ptcsig,
 )
+from reconstruct import reconstruct_from_signature as reconstruct_from_jsonl
 
 
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Torre degli Orologi (Prime Tower Clocks) — base 2 + CRT.")
     ap.add_argument("N", nargs="?", help="Numero N (decimale). Omettilo se usi --load-jsonl.")
-    ap.add_argument("--anchor", type=int, default=DEFAULT_ANCHOR, help=f"Primo orologio (default {DEFAULT_ANCHOR}).")
+    ap.add_argument(
+        "--anchor",
+        type=int,
+        default=DEFAULT_ANCHOR,
+        help=f"Primo orologio (default {DEFAULT_ANCHOR}).",
+    )
     ap.add_argument(
         "--smooth-primes",
         default=",".join(map(str, DEFAULT_SMOOTH_PRIMES)),

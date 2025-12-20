@@ -5,7 +5,12 @@ reconstruct_from_signature(PTCSig) returns (N_mod_M, M, lossless_by_bits)
 where lossless_by_bits is True only if summary contains M_bits and N_bits and M_bits > N_bits.
 """
 
-from math import prod
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from jsonl_validation import PTCSig
 
 
 def _egcd(a: int, b: int) -> tuple[int, int, int]:
@@ -63,4 +68,5 @@ def reconstruct_from_signature(sig: PTCSig) -> tuple[int, int, bool]:
 
     return a, m, lossless
 
-__all__ = ['reconstruct_from_signature']
+
+__all__ = ["reconstruct_from_signature"]
