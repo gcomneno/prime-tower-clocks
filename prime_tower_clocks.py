@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 prime_tower_clocks.py — "Torre degli Orologi" (base 2) su moduli primi "nice".
 
@@ -31,22 +30,22 @@ Nota:
 
 from __future__ import annotations
 
-import argparse
 import math
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 # --- Config di default ------------------------------------------------------
 
 DEFAULT_ANCHOR = 61
-DEFAULT_SMOOTH_PRIMES: List[int] = [2, 3, 5, 7, 11, 13]
-DEFAULT_32BIT_MIN_P = 1 << 31          # ~2.1e9
-DEFAULT_32BIT_MAX_P = (1 << 32) - 1    # 4,294,967,295
+DEFAULT_SMOOTH_PRIMES: list[int] = [2, 3, 5, 7, 11, 13]
+DEFAULT_32BIT_MIN_P = 1 << 31  # ~2.1e9
+DEFAULT_32BIT_MAX_P = (1 << 32) - 1  # 4,294,967,295
 
 
 # --- Utility aritmetiche ----------------------------------------------------
 
-def egcd(a: int, b: int) -> Tuple[int, int, int]:
+
+def egcd(a: int, b: int) -> tuple[int, int, int]:
     """Extended GCD: ritorna (g, x, y) con a*x + b*y = g = gcd(a,b)."""
     if b == 0:
         return (abs(a), 1 if a >= 0 else -1, 0)
@@ -63,7 +62,7 @@ def modinv(a: int, m: int) -> int:
     return x % m
 
 
-def crt_pair(a1: int, m1: int, a2: int, m2: int) -> Tuple[int, int]:
+def crt_pair(a1: int, m1: int, a2: int, m2: int) -> tuple[int, int]:
     """
     CRT per moduli coprimi:
       x ≡ a1 (mod m1)
@@ -82,7 +81,7 @@ def crt_pair(a1: int, m1: int, a2: int, m2: int) -> Tuple[int, int]:
     return (x % (m1 * m2), m1 * m2)
 
 
-def crt_many(residues: Sequence[int], moduli: Sequence[int]) -> Tuple[int, int]:
+def crt_many(residues: Sequence[int], moduli: Sequence[int]) -> tuple[int, int]:
     """CRT iterativa (moduli coprimi)."""
     if len(residues) != len(moduli):
         raise ValueError("CRT: lunghezze diverse.")
@@ -94,7 +93,8 @@ def crt_many(residues: Sequence[int], moduli: Sequence[int]) -> Tuple[int, int]:
 
 # --- Primalità (Miller-Rabin) ----------------------------------------------
 
-def _mr_decompose(n: int) -> Tuple[int, int]:
+
+def _mr_decompose(n: int) -> tuple[int, int]:
     """n-1 = d * 2^s con d dispari."""
     d = n - 1
     s = 0
@@ -142,12 +142,13 @@ def is_probable_prime(n: int) -> bool:
 
 # --- Smoothness / "nice primes" --------------------------------------------
 
-def factor_smooth(n: int, primes: Sequence[int]) -> Tuple[Dict[int, int], int]:
+
+def factor_smooth(n: int, primes: Sequence[int]) -> tuple[dict[int, int], int]:
     """
     Fattorizza n usando solo i primi in `primes`.
     Ritorna (fattori, resto). Se resto=1 => completamente smooth.
     """
-    f: Dict[int, int] = {}
+    f: dict[int, int] = {}
     for p in primes:
         if n == 1:
             break
@@ -160,7 +161,7 @@ def factor_smooth(n: int, primes: Sequence[int]) -> Tuple[Dict[int, int], int]:
     return f, n
 
 
-def is_primitive_root_2(p: int, factors_p_minus_1: Dict[int, int]) -> bool:
+def is_primitive_root_2(p: int, factors_p_minus_1: dict[int, int]) -> bool:
     """True se 2 ha ordine p-1 modulo p."""
     if p <= 2:
         return False
@@ -171,7 +172,7 @@ def is_primitive_root_2(p: int, factors_p_minus_1: Dict[int, int]) -> bool:
     return True
 
 
-def nice_prime_info(p: int, smooth_primes: Sequence[int]) -> Optional[Dict[int, int]]:
+def nice_prime_info(p: int, smooth_primes: Sequence[int]) -> dict[int, int] | None:
     """
     Se p è "nice", ritorna la fattorizzazione smooth di (p-1) come dict {q:exp},
     altrimenti None.
@@ -190,14 +191,14 @@ def _gen_smooth_ms_in_range(
     primes: Sequence[int],
     min_m: int,
     max_m: int,
-) -> Iterable[Tuple[int, Dict[int, int]]]:
+) -> Iterable[tuple[int, dict[int, int]]]:
     """
     Genera m "smooth" in [min_m, max_m] come (m, factor_dict).
     Implementazione ricorsiva con pruning su max_m.
     """
     primes = list(primes)
 
-    def rec(i: int, cur: int, fac: Dict[int, int]) -> None:
+    def rec(i: int, cur: int, fac: dict[int, int]) -> None:
         if cur > max_m:
             return
         if i == len(primes):
@@ -218,12 +219,11 @@ def _gen_smooth_ms_in_range(
             v *= p
         fac.pop(p, None)
 
-    yield_items: List[Tuple[int, Dict[int, int]]] = []
+    yield_items: list[tuple[int, dict[int, int]]] = []
     rec(0, 1, {})
     # qui yieldiamo ordinati decrescenti: vogliamo primi grandi (meno orologi)
     yield_items.sort(key=lambda t: t[0], reverse=True)
-    for item in yield_items:
-        yield item
+    yield from yield_items
 
 
 def generate_nice_primes_32(
@@ -231,7 +231,7 @@ def generate_nice_primes_32(
     min_p: int = DEFAULT_32BIT_MIN_P,
     max_p: int = DEFAULT_32BIT_MAX_P,
     limit: int = 2000,
-) -> Iterable[Tuple[int, Dict[int, int]]]:
+) -> Iterable[tuple[int, dict[int, int]]]:
     """
     Genera fino a `limit` primi "nice" 32-bit nell'intervallo [min_p, max_p],
     usando la costruzione p = m + 1 con m smooth.
@@ -255,6 +255,7 @@ def generate_nice_primes_32(
 
 # --- Log discreto (Pohlig–Hellman) -----------------------------------------
 
+
 def dlog_prime_power(
     g: int,
     h: int,
@@ -268,7 +269,7 @@ def dlog_prime_power(
     """
     if exp <= 0:
         raise ValueError("exp deve essere positivo.")
-    n = q ** exp
+    n = q**exp
     g %= p
     h %= p
     if g == 0 or h == 0:
@@ -284,7 +285,7 @@ def dlog_prime_power(
         c = pow((h * inv_gx) % p, q ** (exp - 1 - k), p)
 
         # trova a_k in [0,q-1] tale che d^{a_k} = c
-        a_k: Optional[int] = None
+        a_k: int | None = None
         cur = 1
         for cand in range(q):
             if cur == c:
@@ -294,12 +295,12 @@ def dlog_prime_power(
         if a_k is None:
             raise ValueError(f"Discrete log lifting fallito (q={q}, exp={exp})")
 
-        x += a_k * (q ** k)
+        x += a_k * (q**k)
 
     return x % n
 
 
-def dlog_pohlig_hellman_base2(h: int, p: int, factors_p_minus_1: Dict[int, int]) -> int:
+def dlog_pohlig_hellman_base2(h: int, p: int, factors_p_minus_1: dict[int, int]) -> int:
     """
     Risolve 2^x ≡ h (mod p), assumendo che 2 sia generatore (ordine p-1),
     usando fattorizzazione di p-1 (smooth).
@@ -310,11 +311,11 @@ def dlog_pohlig_hellman_base2(h: int, p: int, factors_p_minus_1: Dict[int, int])
         raise ValueError("dlog: h=0 non appartiene a F_p* (nessun esponente).")
 
     phi = p - 1
-    congr_a: List[int] = []
-    congr_m: List[int] = []
+    congr_a: list[int] = []
+    congr_m: list[int] = []
 
     for q, exp in factors_p_minus_1.items():
-        m_i = q ** exp
+        m_i = q**exp
         # riduci al sottogruppo di ordine m_i
         g_i = pow(2, phi // m_i, p)
         h_i = pow(h, phi // m_i, p)
@@ -328,25 +329,26 @@ def dlog_pohlig_hellman_base2(h: int, p: int, factors_p_minus_1: Dict[int, int])
 
 # --- Strutture dati "firma" ------------------------------------------------
 
+
 @dataclass(frozen=True)
 class Firma:
     p: int
     r: int
-    e: Optional[int]  # esponente (mod p-1) se r != 0; altrimenti None
+    e: int | None  # esponente (mod p-1) se r != 0; altrimenti None
     phi: int
-    factors: Optional[Dict[int, int]]
+    factors: dict[int, int] | None
 
 
 @dataclass(frozen=True)
 class TowerSignature:
     N: int
     D: int
-    orologi: List[int]
-    firme: List[Firma]
+    orologi: list[int]
+    firme: list[Firma]
     M: int  # prodotto moduli
 
-    def residues(self) -> List[int]:
-        out: List[int] = []
+    def residues(self) -> list[int]:
+        out: list[int] = []
         for f in self.firme:
             if f.e is None:
                 out.append(0)
@@ -357,6 +359,7 @@ class TowerSignature:
 
 # --- Core API ---------------------------------------------------------------
 
+
 def choose_orologi_for_digits(
     D: int,
     anchor: int = DEFAULT_ANCHOR,
@@ -364,20 +367,20 @@ def choose_orologi_for_digits(
     # scegli orologi grandi (32-bit) per ridurre il numero di orologi:
     min_p: int = DEFAULT_32BIT_MIN_P,
     max_p: int = DEFAULT_32BIT_MAX_P,
-) -> List[Tuple[int, Dict[int, int]]]:
+) -> list[tuple[int, dict[int, int]]]:
     """
     Sceglie una lista di orologi (p, factors(p-1)) tale che M = Π p > 10^D.
     L'anchor viene messo per primo.
     """
     if D <= 0:
         raise ValueError("D deve essere positivo.")
-    target = 10 ** D
+    target = 10**D
 
     anchor_f = nice_prime_info(anchor, smooth_primes)
     if anchor_f is None:
         raise ValueError(f"anchor={anchor} non è un orologio 'nice' (serve p-1 smooth e 2 generatore).")
 
-    chosen: List[Tuple[int, Dict[int, int]]] = [(anchor, anchor_f)]
+    chosen: list[tuple[int, dict[int, int]]] = [(anchor, anchor_f)]
     M = anchor
 
     used = {anchor}
@@ -415,7 +418,7 @@ def compute_tower_signature(
     chosen = choose_orologi_for_digits(D, anchor=anchor, smooth_primes=smooth_primes)
     orologi = [p for p, _ in chosen]
     M = 1
-    firme: List[Firma] = []
+    firme: list[Firma] = []
 
     for p, fac in chosen:
         M *= p
@@ -429,7 +432,7 @@ def compute_tower_signature(
     return TowerSignature(N=N, D=D, orologi=orologi, firme=firme, M=M)
 
 
-def reconstruct_from_tower_signature(sig: TowerSignature) -> Tuple[int, int]:
+def reconstruct_from_tower_signature(sig: TowerSignature) -> tuple[int, int]:
     """
     Ricostruisce N_mod_M usando CRT sulle residue (0 oppure 2^e mod p).
     Ritorna (N_mod_M, M).
@@ -442,10 +445,11 @@ def reconstruct_from_tower_signature(sig: TowerSignature) -> Tuple[int, int]:
 
 # --- CLI --------------------------------------------------------------------
 
-def _parse_primes_csv(s: str) -> List[int]:
+
+def _parse_primes_csv(s: str) -> list[int]:
     if not s.strip():
         return []
-    out: List[int] = []
+    out: list[int] = []
     for tok in s.split(","):
         tok = tok.strip()
         if not tok:
@@ -458,18 +462,19 @@ def _parse_primes_csv(s: str) -> List[int]:
         raise ValueError("I primi devono essere >= 2.")
     return out
 
+
 # ---------------------------------------------------------------------
 # JSONL bridge: TowerSignature -> PTCSig (minimal, decodabile nel tempo)
 # ---------------------------------------------------------------------
 try:
-    from jsonl_validation import PTCSig, ClockRec, _utc_now_iso
+    from jsonl_validation import ClockRec, PTCSig, _utc_now_iso
 except Exception:  # pragma: no cover
     PTCSig = None  # type: ignore
     ClockRec = None  # type: ignore
     _utc_now_iso = None  # type: ignore
 
 
-def tower_to_ptcsig(sig: "TowerSignature", base: int = 2) -> "PTCSig":
+def tower_to_ptcsig(sig: TowerSignature, base: int = 2) -> PTCSig:
     """Convert a TowerSignature to a minimal JSONL signature container (PTCSig)."""
     if PTCSig is None or ClockRec is None or _utc_now_iso is None:
         raise RuntimeError("jsonl_validation.py non disponibile: impossibile esportare JSONL")
@@ -496,4 +501,5 @@ def tower_to_ptcsig(sig: "TowerSignature", base: int = 2) -> "PTCSig":
 
 if __name__ == "__main__":
     from cli import main
+
     raise SystemExit(main())

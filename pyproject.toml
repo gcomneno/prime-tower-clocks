@@ -1,21 +1,35 @@
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "prime-tower-clocks"
 version = "0.1.0"
 description = "Modular signatures of integers via prime clocks and CRT"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "ruff>=0.5"]
+dev = [
+  "pytest>=7",
+  "ruff>=0.5",
+]
+
+[tool.setuptools]
+py-modules = ["prime_tower_clocks", "cli", "jsonl_validation", "reconstruct"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = []
+ignore = [
+  "E501",  # line too long: il formatter non può sempre risolverla (stringhe, doc, ecc.)
+  "B905",  # zip(strict=...) è iper-pignolo per un lab
+]
