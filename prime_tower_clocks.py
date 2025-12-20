@@ -30,6 +30,11 @@ Nota:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from jsonl_validation import ClockRec, PTCSig
+
 import math
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -466,18 +471,10 @@ def _parse_primes_csv(s: str) -> list[int]:
 # ---------------------------------------------------------------------
 # JSONL bridge: TowerSignature -> PTCSig (minimal, decodabile nel tempo)
 # ---------------------------------------------------------------------
-try:
-    from jsonl_validation import ClockRec, PTCSig, _utc_now_iso
-except Exception:  # pragma: no cover
-    PTCSig = None  # type: ignore
-    ClockRec = None  # type: ignore
-    _utc_now_iso = None  # type: ignore
-
 
 def tower_to_ptcsig(sig: TowerSignature, base: int = 2) -> PTCSig:
     """Convert a TowerSignature to a minimal JSONL signature container (PTCSig)."""
-    if PTCSig is None or ClockRec is None or _utc_now_iso is None:
-        raise RuntimeError("jsonl_validation.py non disponibile: impossibile esportare JSONL")
+    from jsonl_validation import ClockRec, PTCSig, _utc_now_iso
 
     clocks: list[ClockRec] = []
     for f in sig.firme:
