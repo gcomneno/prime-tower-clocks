@@ -23,3 +23,4 @@ htmlcov/
 # local artifacts
 sig.jsonl
 *.jsonl
+out/
