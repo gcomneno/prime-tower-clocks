@@ -37,7 +37,7 @@ fmt:
 	$(PY) -m ruff check . --fix
 	$(PY) -m ruff format .
 
-hygiene: lint test
+hygiene: fmt test
 
 clean:
 	rm -f $(SIG)

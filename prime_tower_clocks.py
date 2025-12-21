@@ -179,18 +179,9 @@ def is_primitive_root_2(p: int, factors_p_minus_1: dict[int, int]) -> bool:
 
 def nice_prime_info(p: int, smooth_primes: Sequence[int]) -> dict[int, int] | None:
     """
-    "Nice prime" (orologio valido) — definizione ufficiale del progetto.
-
-    Un primo p è "nice" (rispetto a smooth_primes) se e solo se:
-      1) p è primo
-      2) (p-1) è completamente smooth rispetto a smooth_primes (nessun resto)
-      3) 2 è generatore modulo p (ord_p(2) = p-1)
-
-    Se p è "nice", ritorna la fattorizzazione smooth di (p-1) come dict {q:exp}.
-    Altrimenti ritorna None.
-
-    Nota: questo predicato è l'autorità unica (README + code).
-"""
+    Se p è "nice", ritorna la fattorizzazione smooth di (p-1) come dict {q:exp},
+    altrimenti None.
+    """
     if not is_probable_prime(p):
         return None
     fac, rem = factor_smooth(p - 1, smooth_primes)
@@ -205,6 +196,8 @@ def _gen_smooth_ms_in_range(
     primes: Sequence[int],
     min_m: int,
     max_m: int,
+    *,
+    prefer_large: bool = True,
 ) -> Iterable[tuple[int, dict[int, int]]]:
     """
     Genera m "smooth" in [min_m, max_m] come (m, factor_dict).
@@ -235,8 +228,9 @@ def _gen_smooth_ms_in_range(
 
     yield_items: list[tuple[int, dict[int, int]]] = []
     rec(0, 1, {})
-    # qui yieldiamo ordinati decrescenti: vogliamo primi grandi (meno orologi)
-    yield_items.sort(key=lambda t: t[0], reverse=True)
+    # Ordine dei candidati: di default decrescente (primi grandi → meno orologi).
+    # In modalità 'fit' useriamo crescente: serve cercare l'orologio più piccolo che chiude il target.
+    yield_items.sort(key=lambda t: t[0], reverse=prefer_large)
     yield from yield_items
 
 
@@ -245,6 +239,8 @@ def generate_nice_primes_32(
     min_p: int = DEFAULT_32BIT_MIN_P,
     max_p: int = DEFAULT_32BIT_MAX_P,
     limit: int = 2000,
+    *,
+    prefer_large: bool = True,
 ) -> Iterable[tuple[int, dict[int, int]]]:
     """
     Genera fino a `limit` primi "nice" 32-bit nell'intervallo [min_p, max_p],
@@ -254,7 +250,7 @@ def generate_nice_primes_32(
     max_m = max_p - 1
 
     found = 0
-    for m, fac in _gen_smooth_ms_in_range(smooth_primes, min_m, max_m):
+    for m, fac in _gen_smooth_ms_in_range(smooth_primes, min_m, max_m, prefer_large=prefer_large):
         p = m + 1
         # m è già p-1, quindi fac è fattorizzazione di p-1
         if not is_probable_prime(p):
@@ -378,22 +374,17 @@ def choose_orologi_for_digits(
     D: int,
     anchor: int = DEFAULT_ANCHOR,
     smooth_primes: Sequence[int] = DEFAULT_SMOOTH_PRIMES,
-    # scegli orologi grandi (32-bit) per ridurre il numero di orologi:
+    # Step 2 knobs:
     min_p: int = DEFAULT_32BIT_MIN_P,
     max_p: int = DEFAULT_32BIT_MAX_P,
     pool_limit: int = 5000,
+    # Step 3/4: ordering strategy
+    prefer_large: bool = True,
 ) -> list[tuple[int, dict[int, int]]]:
     """
     Sceglie una lista di orologi (p, factors(p-1)) tale che M = Π p > 10^D.
     L'anchor viene messo per primo.
-
-    "Orologio" = primo "nice" secondo nice_prime_info(p, smooth_primes).
-
-    Strategia (Step 2): il range [min_p, max_p] controlla il trade-off
-    pochi primi grandi (firma corta) vs molti piccoli (firma lunga ma veloce).
-
-    pool_limit controlla quanti candidati "nice" vengono cercati prima di fallire.
-"""
+    """
     if D <= 0:
         raise ValueError("D deve essere positivo.")
     target = 10**D
@@ -408,14 +399,76 @@ def choose_orologi_for_digits(
     used = {anchor}
 
     # Generatore di "nice primes" 32-bit
-    for p, fac in generate_nice_primes_32(smooth_primes, min_p=min_p, max_p=max_p, limit=pool_limit):
-        if p in used:
+    if prefer_large:
+        for p, fac in generate_nice_primes_32(
+            smooth_primes,
+            min_p=min_p,
+            max_p=max_p,
+            limit=pool_limit,
+            prefer_large=True,
+        ):
+            if p in used:
+                continue
+            chosen.append((p, fac))
+            used.add(p)
+            M *= p
+            if M > target:
+                return chosen
+
+    # FIT mode: scegli l'ultimo orologio il più piccolo possibile che fa superare il target.
+    # Se non si riesce a chiudere con un solo orologio nel pool/range corrente, facciamo crescere M
+    # prendendo un p grande e riproviamo (finché il pool non si esaurisce).
+    pool = list(
+        generate_nice_primes_32(
+            smooth_primes,
+            min_p=min_p,
+            max_p=max_p,
+            limit=pool_limit,
+            prefer_large=False,
+        )
+    )
+    if not pool:
+        raise RuntimeError(
+            "Pool di primi 'nice' insufficiente nel range scelto. "
+            "Prova ad aumentare pool_limit, estendere smooth_primes, o allargare [min_p..max_p]."
+        )
+
+    # Se già sopra target con l'anchor, fine.
+    if M > target:
+        return chosen
+
+    while M <= target:
+        threshold = (target // M) + 1
+
+        # 1) Prova a chiudere scegliendo il più piccolo p >= threshold
+        picked: tuple[int, dict[int, int]] | None = None
+        for p, fac in pool:
+            if p in used:
+                continue
+            if p >= threshold:
+                picked = (p, fac)
+                break
+        if picked is not None:
+            p, fac = picked
+            chosen.append((p, fac))
+            used.add(p)
+            M *= p
+            if M > target:
+                return chosen
             continue
+
+        # 2) Altrimenti non possiamo chiudere nel pool corrente: cresci M prendendo un p grande
+        picked = None
+        for p, fac in reversed(pool):
+            if p not in used:
+                picked = (p, fac)
+                break
+        if picked is None:
+            break
+        p, fac = picked
         chosen.append((p, fac))
         used.add(p)
         M *= p
-        if M > target:
-            return chosen
 
     raise RuntimeError(
         "Pool di primi 'nice' insufficiente nel range 32-bit scelto. "
@@ -430,16 +483,13 @@ def compute_tower_signature(
     min_p: int = DEFAULT_32BIT_MIN_P,
     max_p: int = DEFAULT_32BIT_MAX_P,
     pool_limit: int = 5000,
+    prefer_large: bool = True,
 ) -> TowerSignature:
     """
     Calcola la firma 'Torre degli Orologi' per N:
     - seleziona orologi in modo che M > 10^D
     - per ogni p: r = N mod p; se r != 0 calcola e con Pohlig–Hellman (base 2)
-
-    Parametri Step 2:
-    - min_p / max_p: range di ricerca degli orologi (trade-off pochi grandi vs molti piccoli)
-    - pool_limit: quanti candidati "nice" vengono cercati prima di fallire
-"""
+    """
     if N < 0:
         raise ValueError("N deve essere non-negativo.")
     D = len(str(N)) if N != 0 else 1
@@ -451,6 +501,7 @@ def compute_tower_signature(
         min_p=min_p,
         max_p=max_p,
         pool_limit=pool_limit,
+        prefer_large=prefer_large,
     )
     orologi = [p for p, _ in chosen]
     M = 1
@@ -502,6 +553,7 @@ def _parse_primes_csv(s: str) -> list[int]:
 # ---------------------------------------------------------------------
 # JSONL bridge: TowerSignature -> PTCSig (minimal, decodabile nel tempo)
 # ---------------------------------------------------------------------
+
 
 def tower_to_ptcsig(sig: TowerSignature, base: int = 2) -> PTCSig:
     """Convert a TowerSignature to a minimal JSONL signature container (PTCSig)."""

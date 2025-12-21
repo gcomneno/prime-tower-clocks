@@ -28,6 +28,7 @@ def test_jsonl_roundtrip_and_reconstruct(tmp_path):
     assert lossless_by_bits is True
     assert loaded.lossless_claim is True
 
+
 def test_jsonl_duplicate_p_rejected(tmp_path):
     path = tmp_path / "bad.jsonl"
     lines = [

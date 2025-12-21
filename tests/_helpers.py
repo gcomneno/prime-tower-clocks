@@ -9,6 +9,7 @@ def product(xs: list[int]) -> int:
         out *= x
     return out
 
+
 def collect_nice_primes(k: int, *, max_p: int = 300_000) -> list[int]:
     """
     Prende i primi k 'nice primes' trovati in [3..max_p], usando la definizione del progetto:
@@ -24,6 +25,7 @@ def collect_nice_primes(k: int, *, max_p: int = 300_000) -> list[int]:
             if len(out) >= k:
                 return out
     raise RuntimeError(f"Non ho trovato {k} nice primes entro max_p={max_p}")
+
 
 def build_tower_signature_manual(N: int, primes: list[int]) -> ptc.TowerSignature:
     """
