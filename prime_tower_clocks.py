@@ -189,7 +189,8 @@ def nice_prime_info(p: int, smooth_primes: Sequence[int]) -> dict[int, int] | No
     Se p è "nice", ritorna la fattorizzazione smooth di (p-1) come dict {q:exp}.
     Altrimenti ritorna None.
 
-    Nota: questo predicato è l'autorità unica (README + code)."""
+    Nota: questo predicato è l'autorità unica (README + code).
+"""
     if not is_probable_prime(p):
         return None
     fac, rem = factor_smooth(p - 1, smooth_primes)
@@ -380,15 +381,19 @@ def choose_orologi_for_digits(
     # scegli orologi grandi (32-bit) per ridurre il numero di orologi:
     min_p: int = DEFAULT_32BIT_MIN_P,
     max_p: int = DEFAULT_32BIT_MAX_P,
+    pool_limit: int = 5000,
 ) -> list[tuple[int, dict[int, int]]]:
     """
     Sceglie una lista di orologi (p, factors(p-1)) tale che M = Π p > 10^D.
     L'anchor viene messo per primo.
 
     "Orologio" = primo "nice" secondo nice_prime_info(p, smooth_primes).
-    Questa scelta garantisce:
-      - per ogni residuo non nullo r mod p esiste e con 2^e ≡ r (mod p)
-      - il dlog base 2 è efficiente perché (p-1) è smooth (Pohlig–Hellman)"""
+
+    Strategia (Step 2): il range [min_p, max_p] controlla il trade-off
+    pochi primi grandi (firma corta) vs molti piccoli (firma lunga ma veloce).
+
+    pool_limit controlla quanti candidati "nice" vengono cercati prima di fallire.
+"""
     if D <= 0:
         raise ValueError("D deve essere positivo.")
     target = 10**D
@@ -403,7 +408,7 @@ def choose_orologi_for_digits(
     used = {anchor}
 
     # Generatore di "nice primes" 32-bit
-    for p, fac in generate_nice_primes_32(smooth_primes, min_p=min_p, max_p=max_p, limit=5000):
+    for p, fac in generate_nice_primes_32(smooth_primes, min_p=min_p, max_p=max_p, limit=pool_limit):
         if p in used:
             continue
         chosen.append((p, fac))
@@ -414,7 +419,7 @@ def choose_orologi_for_digits(
 
     raise RuntimeError(
         "Pool di primi 'nice' insufficiente nel range 32-bit scelto. "
-        "Prova ad abbassare min_p, aumentare il set smooth_primes, o alzare il limite."
+        "Prova ad abbassare min_p, aumentare il set smooth_primes, o alzare pool_limit."
     )
 
 
@@ -422,17 +427,31 @@ def compute_tower_signature(
     N: int,
     anchor: int = DEFAULT_ANCHOR,
     smooth_primes: Sequence[int] = DEFAULT_SMOOTH_PRIMES,
+    min_p: int = DEFAULT_32BIT_MIN_P,
+    max_p: int = DEFAULT_32BIT_MAX_P,
+    pool_limit: int = 5000,
 ) -> TowerSignature:
     """
     Calcola la firma 'Torre degli Orologi' per N:
     - seleziona orologi in modo che M > 10^D
     - per ogni p: r = N mod p; se r != 0 calcola e con Pohlig–Hellman (base 2)
-    """
+
+    Parametri Step 2:
+    - min_p / max_p: range di ricerca degli orologi (trade-off pochi grandi vs molti piccoli)
+    - pool_limit: quanti candidati "nice" vengono cercati prima di fallire
+"""
     if N < 0:
         raise ValueError("N deve essere non-negativo.")
     D = len(str(N)) if N != 0 else 1
 
-    chosen = choose_orologi_for_digits(D, anchor=anchor, smooth_primes=smooth_primes)
+    chosen = choose_orologi_for_digits(
+        D,
+        anchor=anchor,
+        smooth_primes=smooth_primes,
+        min_p=min_p,
+        max_p=max_p,
+        pool_limit=pool_limit,
+    )
     orologi = [p for p, _ in chosen]
     M = 1
     firme: list[Firma] = []
