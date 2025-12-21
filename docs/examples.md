@@ -1,7 +1,5 @@
 # Prime Tower Clocks (PTC) — Examples
-
-Questo file è pensato come “manuale da campo”: comandi pronti + spiegazione passo‑passo di cosa succede.
-(Sì: anche se oggi il mostro è un criceto 🐹🕰️)
+Questo file è pensato come “manuale da campo”: comandi pronti + spiegazione passo‑passo di cosa succede. (Sì: anche se oggi il mostro è un criceto 🐹🕰️)
 
 ---
 
@@ -13,11 +11,18 @@ Comando:
 python3 prime_tower_clocks.py 276 --dump-jsonl sig.jsonl --reconstruct
 ```
 
+oppure
+
+```bash
+make demo
+```
+
 Output (esempio reale):
 
-```text
+```bash
 [ptc] preset=fit  min_p=3  max_p=2000000  pool_limit=50000  prefer_large=False
 [ptc] k=2  M_bits=11  N_bits=9  lossless_by_bits=True
+[ptc] overshoot_bits=2  overshoot_dec=0
 [io] wrote sig.jsonl
 [crt] N_mod_M=276
 [crt] M=1159
@@ -67,17 +72,20 @@ quindi l’anchor `61` può apparire dopo un altro clock più piccolo (qui `19`)
   ```text
   p2 > target / M  = 1000 / 61 ≈ 16.39
   ```
+  
   Il più piccolo “nice prime” ≥ 17 trovato nel range è `p2 = 19`.
 
 - Ora:
   ```text
   M = 61 * 19 = 1159  > 1000
+
   ```
   Quindi il selettore si ferma: `k = 2`.
 
 #### Step C — Calcolo dei residui r = N mod p
 - Per `p=61`:
   - `r = 276 mod 61 = 32`
+
 - Per `p=19`:
   - `r = 276 mod 19 = 10`
 
@@ -105,7 +113,6 @@ Se invece `r=0` (cioè `p | N`) allora:
 
 #### Step F — Ricostruzione via CRT (Chinese Remainder Theorem)
 Dalla firma si ricavano le congruenze:
-
 - `N ≡ 32 (mod 61)`
 - `N ≡ 10 (mod 19)`
 
@@ -137,6 +144,8 @@ python3 prime_tower_clocks.py "$N" --preset fit     --reconstruct
 ```
 
 Come leggere i risultati:
+- `overshoot_bits = M_bits - N_bits` ⇒ quanta “prigione” in più stai costruendo.
+- `overshoot_dec` ⇒ quante cifre extra ha M rispetto al target `10^D` (0 = su misura).
 - `k` più basso ⇒ meno righe JSONL / meno congruenze CRT.
 - `M_bits - N_bits` piccolo ⇒ M “su misura” (meno titanio).
 - `minimal` tende a minimizzare `k` usando primi grandi.

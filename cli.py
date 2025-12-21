@@ -128,6 +128,12 @@ def _print_signature_summary(*, N: int, M: int, k: int) -> None:
     lossless_by_bits = M_bits > N_bits
     print(f"[ptc] k={k}  M_bits={M_bits}  N_bits={N_bits}  lossless_by_bits={lossless_by_bits}")
 
+    overshoot_bits = M_bits - N_bits
+    # target per lossless "per cifre": 10^D ha (D+1) cifre
+    D = len(str(N)) if N != 0 else 1
+    overshoot_dec = len(str(M)) - (D + 1)
+    print(f"[ptc] overshoot_bits={overshoot_bits}  overshoot_dec={overshoot_dec}")
+
 
 def main(argv: list[str] | None = None) -> int:
     ap = build_argparser()
