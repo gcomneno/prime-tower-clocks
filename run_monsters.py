@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 
 def parse_summary(jsonl_path: Path) -> dict:
@@ -62,21 +62,34 @@ def main() -> int:
         if summary["M_bits"] is not None and summary["N_bits"] is not None:
             overshoot_bits = int(summary["M_bits"]) - int(summary["N_bits"])
 
-        rows.append({
-            "raw": raw,
-            "N_int": int(raw),
-            "digits_raw": len(raw),
-            "digits_int": len(str(int(raw))),
-            "k": summary["k"],
-            "M_bits": summary["M_bits"],
-            "N_bits": summary["N_bits"],
-            "overshoot_bits": overshoot_bits,
-            "lossless_claim": summary["lossless_claim"],
-            "jsonl": str(jsonl_path),
-        })
+        rows.append(
+            {
+                "raw": raw,
+                "N_int": int(raw),
+                "digits_raw": len(raw),
+                "digits_int": len(str(int(raw))),
+                "k": summary["k"],
+                "M_bits": summary["M_bits"],
+                "N_bits": summary["N_bits"],
+                "overshoot_bits": overshoot_bits,
+                "lossless_claim": summary["lossless_claim"],
+                "jsonl": str(jsonl_path),
+            }
+        )
 
     tsv = outdir / "summary.tsv"
-    cols = ["raw","N_int","digits_raw","digits_int","k","M_bits","N_bits","overshoot_bits","lossless_claim","jsonl"]
+    cols = [
+        "raw",
+        "N_int",
+        "digits_raw",
+        "digits_int",
+        "k",
+        "M_bits",
+        "N_bits",
+        "overshoot_bits",
+        "lossless_claim",
+        "jsonl",
+    ]
     with tsv.open("w", encoding="utf-8") as f:
         f.write("\t".join(cols) + "\n")
         for r in rows:
