@@ -86,6 +86,18 @@ Esempio:
 
 Il `summary` non serve per ricostruire, ma dice chiaramente se la firma era **lossless garantita**.
 
+### Campi di summary (k / M_bits / N_bits)
+
+Nel record finale `{"type":"summary",...}`:
+
+- `k` = **numero di orologi** (quante righe `{"p":...}` ci sono)
+- `M_bits` = `bit_length(M)` dove `M = Π p` (numero di bit necessari a rappresentare `M`)
+- `N_bits` = `bit_length(N)`
+- `lossless_claim` = `True` se `M_bits > N_bits` (condizione **sufficiente** per garantire `M > N`)
+
+Nota: `M_bits > N_bits` garantisce lossless, ma non è una condizione necessaria: può capitare `M > N` anche con `M_bits == N_bits`.
+
+
 ---
 
 ## Uso rapido
@@ -104,6 +116,42 @@ python3 prime_tower_clocks.py --load-jsonl sig.jsonl --reconstruct
 ```bash
 make demo
 ```
+
+
+## Preset di torri (Step 3 + "fit")
+
+I preset servono a scegliere **range** e **strategia** di selezione degli orologi.
+
+- `minimal` (default): pochi orologi, primi grandi (stile 32-bit) → **k piccolo**, numeri nel JSONL più grossi.
+- `fast`: range basso → veloce per CI/demo.
+- `safe`: range più ampio + pool più grande → meno probabilità di “pool insufficiente”.
+- `fit`: **su misura**: quando è possibile chiudere con un solo orologio in più, sceglie il **p più piccolo** che fa superare il target (`M > 10^D`).
+
+> Nota onesta: “fit” non è magia. È un greedy per minimizzare l’overshoot *nell’ultimo step*.
+
+### Esempio con N a 60 cifre
+
+Usa questo N (60 cifre, deterministico):
+
+```bash
+N=123456789012345678901234567890123456789012345678901234567890
+```
+
+Confronto rapido:
+
+```bash
+python3 prime_tower_clocks.py "$N" --preset minimal   --dump-jsonl minimal.jsonl   --reconstruct
+python3 prime_tower_clocks.py "$N" --preset fast      --dump-jsonl fast.jsonl      --reconstruct
+python3 prime_tower_clocks.py "$N" --preset safe      --dump-jsonl safe.jsonl      --reconstruct
+python3 prime_tower_clocks.py "$N" --preset fit       --dump-jsonl fit.jsonl       --reconstruct
+```
+
+Guarda la riga `[ptc] k=... M_bits=...` (e anche la riga `{"type":"summary",...}` dentro il JSONL):
+
+- `k` = numero di orologi
+- `M_bits` = “campo visivo” totale degli orologi (bit length di `M = Π p`)
+- se `M_bits > N_bits` allora la firma è **lossless garantita** (`M > N`)
+
 
 ---
 

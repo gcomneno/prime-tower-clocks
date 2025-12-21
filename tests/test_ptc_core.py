@@ -14,6 +14,7 @@ def test_manual_small_roundtrip_lossless():
     assert M > N
     assert x == N
 
+
 def test_manual_non_lossless_is_mod_M():
     primes = collect_nice_primes(5)  # torre volutamente piccola
     M = product(primes)
@@ -25,6 +26,7 @@ def test_manual_non_lossless_is_mod_M():
     assert M2 == M
     assert M < N
     assert x == (N % M)
+
 
 def test_manual_handles_p_divides_N():
     primes = collect_nice_primes(10)
@@ -39,6 +41,7 @@ def test_manual_handles_p_divides_N():
     assert M > N
     assert x == N
 
+
 def test_large_number_roundtrip_lossless_decades_digits():
     primes = collect_nice_primes(25)  # prodotto enorme anche con primi piccoli
     N = int("1234567890" * 3)  # 30 cifre
@@ -47,6 +50,7 @@ def test_large_number_roundtrip_lossless_decades_digits():
     x, M = ptc.reconstruct_from_tower_signature(sig)
     assert M > N
     assert x == N
+
 
 def test_choose_orologi_for_digits_small_range():
     # Testa la logica di scelta senza il range 32-bit (che è “da demo”, non da test).
@@ -72,6 +76,7 @@ def test_choose_orologi_for_digits_small_range():
         M *= p
 
     assert M > 10**D
+
 
 def test_compute_tower_signature_smoke_single_digit():
     # IMPORTANTISSIMO: D=1 così choose_orologi_for_digits NON entra nel generatore 32-bit.
