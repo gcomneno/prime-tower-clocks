@@ -15,6 +15,8 @@ import argparse
 
 from jsonl_validation import dump_signature_jsonl, load_signature_jsonl
 from prime_tower_clocks import (
+    DEFAULT_32BIT_MAX_P,
+    DEFAULT_32BIT_MIN_P,
     DEFAULT_ANCHOR,
     DEFAULT_SMOOTH_PRIMES,
     _parse_primes_csv,
@@ -39,6 +41,25 @@ def build_argparser() -> argparse.ArgumentParser:
         default=",".join(map(str, DEFAULT_SMOOTH_PRIMES)),
         help="Lista di primi per la smoothness di (p-1), CSV. Default: 2,3,5,7,11,13",
     )
+    ap.add_argument(
+        "--min-p",
+        type=int,
+        default=None,
+        help="Minimo p per la ricerca degli orologi. Default: range 32-bit (2^31).",
+    )
+    ap.add_argument(
+        "--max-p",
+        type=int,
+        default=None,
+        help="Massimo p per la ricerca degli orologi. Default: range 32-bit (2^32-1).",
+    )
+    ap.add_argument(
+        "--pool-limit",
+        type=int,
+        default=5000,
+        help="Numero massimo di candidati 'nice' provati per costruire la torre (default: 5000).",
+    )
+
     ap.add_argument("--dump-jsonl", metavar="PATH", help="Salva la firma (minima) in JSONL.")
     ap.add_argument("--load-jsonl", metavar="PATH", help="Carica firma JSONL.")
     ap.add_argument("--reconstruct", action="store_true", help="Esegue CRT: ricostruisce N (o N mod M).")
@@ -76,10 +97,21 @@ def main(argv: list[str] | None = None) -> int:
     N = int(args.N)
     smooth_primes = _parse_primes_csv(args.smooth_primes)
 
-    sig = compute_tower_signature(N, anchor=args.anchor, smooth_primes=smooth_primes)
+    min_p = DEFAULT_32BIT_MIN_P if args.min_p is None else int(args.min_p)
+    max_p = DEFAULT_32BIT_MAX_P if args.max_p is None else int(args.max_p)
+
+    sig = compute_tower_signature(
+        N,
+        anchor=args.anchor,
+        smooth_primes=smooth_primes,
+        min_p=min_p,
+        max_p=max_p,
+        pool_limit=int(args.pool_limit),
+    )
 
     print(f"N={sig.N}  (D={sig.D} cifre)")
     print(f"anchor={args.anchor}  smooth_primes={smooth_primes}")
+    print(f"range_p=[{min_p}..{max_p}]  pool_limit={int(args.pool_limit)}")
     print(f"orologi={sig.orologi}")
     print(f"M=Πp = {sig.M}")
     print()
