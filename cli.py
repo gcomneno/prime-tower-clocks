@@ -12,11 +12,22 @@ Usage examples:
       python3 prime_tower_clocks.py 276 --preset fast --dump-jsonl fast.jsonl --reconstruct
       python3 prime_tower_clocks.py 276 --preset safe --dump-jsonl safe.jsonl --reconstruct
       python3 prime_tower_clocks.py 276 --preset fit --dump-jsonl fit.jsonl --reconstruct
+
+
+  - Pack JSONL -> PTC-bin (tower dictionary):
+      python3 prime_tower_clocks.py pack --out dataset.ptcbin sig1.jsonl sig2.jsonl
+
+  - Unpack PTC-bin -> JSONL:
+      python3 prime_tower_clocks.py unpack --in dataset.ptcbin --outdir out_jsonl/
+
+  - Inspect PTC-bin:
+      python3 prime_tower_clocks.py cat --in dataset.ptcbin
 """
 
 from __future__ import annotations
 
 import argparse
+import sys
 
 from jsonl_validation import dump_signature_jsonl, load_signature_jsonl
 from prime_tower_clocks import (
@@ -78,7 +89,7 @@ def resolve_clock_strategy(
     return preset_eff, p_min, p_max, lim, prefer_large
 
 
-def build_argparser() -> argparse.ArgumentParser:
+def build_sign_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Prime Tower Clocks — base 2 + CRT (firma modulare).")
     ap.add_argument("N", nargs="?", help="Numero N (decimale). Omettilo se usi --load-jsonl.")
     ap.add_argument("--dump-jsonl", help="Scrivi firma su JSONL (percorso file).")
@@ -136,7 +147,17 @@ def _print_signature_summary(*, N: int, M: int, k: int) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = build_argparser()
+    # Hybrid CLI:
+    # - legacy mode: `prime_tower_clocks.py N [options]`
+    # - conversion mode: `prime_tower_clocks.py pack|unpack|cat ...`
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] in {"pack", "unpack", "cat"}:
+        from ptc_convert import main as convert_main
+
+        return convert_main(argv)
+
+    ap = build_sign_argparser()
     args = ap.parse_args(argv)
 
     if args.load_jsonl:
@@ -192,6 +213,10 @@ def main(argv: list[str] | None = None) -> int:
         if M > N:
             print(f"[crt] reconstructed N={n_mod_m}  (lossless: M>N)")
     return 0
+
+
+# Backward-compat alias
+build_argparser = build_sign_argparser
 
 
 if __name__ == "__main__":
