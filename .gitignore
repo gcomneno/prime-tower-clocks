@@ -2,10 +2,12 @@
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
 *.egg-info/
+*.pyd
 dist/
 build/
+out/
+bench_out/
 
 # venv
 .venv/
