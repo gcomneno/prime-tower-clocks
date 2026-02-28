@@ -18,7 +18,7 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = ["prime_tower_clocks", "cli", "jsonl_validation", "reconstruct", "ptc_model", "ptc_jsonl", "ptcbin", "tower_dict", "ptc_convert"]
+py-modules = ["prime_tower_clocks", "cli", "jsonl_validation", "reconstruct", "ptc_model", "ptc_jsonl", "ptc_bin", "tower_dict", "ptc_convert"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
