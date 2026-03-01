@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import List
-
 import ptc_model
-from ptc_spiral.model import SpiralSig, Mode
+from ptc_spiral.model import Mode, SpiralSig
 
 
 def classic_to_spiral(
@@ -37,8 +35,8 @@ def classic_to_spiral(
         # PTCSig from your repo exposes N_bits; keep it optional to stay robust.
         bound_bits = getattr(sig, "N_bits", None)
 
-    primes: List[int] = []
-    xs: List[int] = []
+    primes: list[int] = []
+    xs: list[int] = []
 
     # progressive CRT state: x ≡ N (mod M)
     x = 0

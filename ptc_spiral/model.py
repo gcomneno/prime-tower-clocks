@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Literal
-
+from typing import Literal
 
 Mode = Literal["lossless", "lossy"]
 
@@ -29,8 +28,8 @@ class SpiralSig:
     """
 
     version: int
-    primes: List[int]
-    xs: List[int]
+    primes: list[int]
+    xs: list[int]
     mode: Mode = "lossless"
     bound_bits: int | None = None
     created_utc: str | None = None
@@ -76,8 +75,8 @@ class SpiralSig:
                     f"got M_last={self.M_last()} bound_bits={self.bound_bits}"
                 )
 
-    def Ms(self) -> List[int]:
-        Ms: List[int] = []
+    def Ms(self) -> list[int]:
+        Ms: list[int] = []
         M = 1
         for p in self.primes:
             M *= p

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import List, Tuple
-
-from ptc_spiral.model import SpiralSig, Mode
+from ptc_spiral.model import Mode, SpiralSig
 
 
-def spiral_trajectory(N: int, primes: List[int]) -> List[Tuple[int, int]]:
+def spiral_trajectory(N: int, primes: list[int]) -> list[tuple[int, int]]:
     """
     Returns the spiral trajectory of N over progressively
     increasing modular products of the given primes.
@@ -17,7 +15,7 @@ def spiral_trajectory(N: int, primes: List[int]) -> List[Tuple[int, int]]:
     Guarantees:
         x_{k+1} % M_k == x_k
     """
-    trajectory: List[Tuple[int, int]] = []
+    trajectory: list[tuple[int, int]] = []
     M = 1
 
     for p in primes:
@@ -27,9 +25,10 @@ def spiral_trajectory(N: int, primes: List[int]) -> List[Tuple[int, int]]:
 
     return trajectory
 
+
 def spiral_sig(
     N: int,
-    primes: List[int],
+    primes: list[int],
     *,
     mode: Mode = "lossless",
     bound_bits: int | None = None,
